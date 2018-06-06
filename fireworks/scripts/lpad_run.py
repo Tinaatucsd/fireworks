@@ -76,7 +76,7 @@ def parse_helper(lp, args, wf_mode=False, skip_pw=False):
         return pw_check(args.fw_id, args, skip_pw)
     if args.query:
         query = ast.literal_eval(args.query)
-    if args.name and not args.launches_mode:
+    if args.name and 'launches_mode' in args and not args.launches_mode:
         query['name'] = args.name
     if args.state:
         query['state'] = args.state
@@ -339,9 +339,10 @@ def get_children(links, start, max_depth):
 
 def detect_lostruns(args):
     lp = get_lp(args)
+    query = ast.literal_eval(args.query) if args.query else None
     fl, ff, fi = lp.detect_lostruns(expiration_secs=args.time, fizzle=args.fizzle, rerun=args.rerun,
                                     max_runtime=args.max_runtime, min_runtime=args.min_runtime,
-                                    refresh=args.refresh)
+                                    refresh=args.refresh, query=query)
     lp.m_logger.debug('Detected {} lost launches: {}'.format(len(fl), fl))
     lp.m_logger.info('Detected {} lost FWs: {}'.format(len(ff), ff))
     lp.m_logger.info('Detected {} inconsistent FWs: {}'.format(len(fi), fi))
@@ -985,6 +986,8 @@ def lpad():
                                                       'than this (seconds)', type=int)
     fizzled_parser.add_argument('--min_runtime', help='min runtime, matching failures must have run '
                                                       'at least this long (seconds)', type=int)
+    fizzled_parser.add_argument('-q', '--query',
+                                help='restrict search to only FWs matching this query')
     fizzled_parser.set_defaults(func=detect_lostruns)
 
     priority_parser = subparsers.add_parser('set_priority', help='modify the priority of one or more FireWorks')
